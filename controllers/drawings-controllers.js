@@ -1,5 +1,6 @@
 const HttpError = require('../models/http-error');
 const { v4: uuidv4 } = require('uuid');
+const { validationResult } = require('express-validator')
 
 let drawingsData = [
     {
@@ -36,8 +37,12 @@ let drawingsData = [
 ];
 
 const createDrawing = (req, res, next) => {
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+        throw new HttpError('Invalid Input', 422)
+    };
+
     const { title, description, artist, date, imgURL, imgJSON } = req.body;
-    //will add validation later
 
     const newDrawing = {
         id: uuidv4(),
@@ -52,14 +57,14 @@ const createDrawing = (req, res, next) => {
     drawingsData.push(newDrawing);
     res.status(201)
     res.json({ drawing: newDrawing })
-}
+};
 
 const getAllDrawings = (req, res, next) => {
     const drawings = drawingsData;
 
     res.status(200);
     res.json({ drawings });
-}
+};
 
 const getDrawingById = (req, res, next) => {
     const drawingId = req.params.id;
@@ -82,6 +87,11 @@ const getDrawingsByUserId = (req, res, next) => {
 
 
 const updateDrawing = (req, res, next) => {
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+        throw new HttpError('Invalid Input', 422)
+    };
+
     const { title, description, date, imgURL, imgJSON } = req.body;
     const drawingId = req.params.id;
     const updatedDrawing = { ...drawingsData.find((d) => (d.id === drawingId)) };
@@ -105,6 +115,11 @@ const updateDrawing = (req, res, next) => {
 
 const deleteDrawing = (req, res, next) => {
     const drawingId = req.params.id;
+    const drawing = drawingsData.find((d) => (d.id === drawingId));
+    if (!drawing) {
+        throw new HttpError('Could not find a drawing for the provided id', 404);
+    };
+
     drawingsData = drawingsData.filter((d) => (d.id !== drawingId));
 
     res.status(200);

@@ -1,5 +1,7 @@
 const HttpError = require('../models/http-error');
 const { v4: uuidv4 } = require('uuid');
+const { validationResult } = require('express-validator')
+
 
 let usersData = [
     {
@@ -23,6 +25,11 @@ let usersData = [
 ];
 
 const signup = (req, res, next) => {
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+        throw new HttpError('Invalid Input', 422)
+    };
+
     const { username, email, password } = req.body;
 
     const existingUser = usersData.find((u) => (u.email === email));
@@ -43,6 +50,11 @@ const signup = (req, res, next) => {
 };
 
 const login = (req, res, next) => {
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+        throw new HttpError('Invalid Input', 422)
+    };
+
     const { email, password } = req.body;
 
     const identifiedUser = usersData.find((u) => (u.email === email));
@@ -70,8 +82,6 @@ const getUserByUserId = (req, res, next) => {
     }
     res.json({ user })
 };
-
-
 
 exports.signup = signup;
 exports.login = login;
