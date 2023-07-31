@@ -1,10 +1,18 @@
+// if (process.env.NODE_ENV !== 'production') {
+//     require('dotenv').config();
+// }// this code will always run in develpment mode
+
+
 const express = require('express');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+
 const drawingsRoutes = require('./routes/drawings-routes');
 const usersRoutes = require('./routes/users-routes');
 const HttpError = require('./models/http-error');
 
 const app = express();
+const dbUrl = process.env.DB_URL;
 
 //middleware to parse the req body to regular js data(it has to be before the routes middleware)
 app.use(bodyParser.json())
@@ -27,4 +35,14 @@ app.use((error, req, res, next) => {
     res.json({ message: error.message || 'An unknown error occurred!' });
 })
 
-app.listen(5000);
+mongoose
+    .connect('mongodb+srv://lulu:3R558WhiGXuWkpnn@cluster0.hizlluw.mongodb.net/drawings?retryWrites=true&w=majority')
+    .then(() => {
+        app.listen(5000);
+    })
+    .catch(err => {
+        console.log(err);
+    });
+
+
+
