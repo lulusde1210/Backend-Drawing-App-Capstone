@@ -1,41 +1,9 @@
 const HttpError = require('../models/http-error');
-const { v4: uuidv4 } = require('uuid');
 const { validationResult } = require('express-validator');
 const Drawing = require('../models/drawing');
+const User = require('../models/user');
+const mongoose = require('mongoose');
 
-// let drawingsData = [
-//     {
-//         id: 'p1',
-//         title: 'Three little pigs',
-//         description: 'This is description for three little pigs',
-//         artist: 'Lulu',
-//         date: '01-01-2000',
-//         imgURL:
-//             'https://cdn.shopify.com/s/files/1/0278/9759/products/Three_Litte_Pigs_Box_Product_Front_-_Shopify_CM_2048x.jpg?v=1574272985',
-//         imgJSON: 'three little pigs img JSON'
-//     },
-//     {
-//         id: 'p2',
-//         title: 'Corduroy',
-//         description: 'This is description for Corduroy',
-//         artist: 'Mickey',
-//         date: '01-01-2000',
-//         imgURL:
-//             ' https://prodimage.images-bn.com/pimages/9780140501735_p0_v3_s550x406.jpg',
-//         imgJSON: 'Corduroy JSON'
-
-//     },
-//     {
-//         id: 'p3',
-//         title: 'Where the wild things are ',
-//         description: 'This is description for where the wild things are',
-//         artist: 'Lulu',
-//         date: '01-01-2000',
-//         imgURL:
-//             'https://images-na.ssl-images-amazon.com/images/I/71eczBv1C5L._AC_SL1001_.jpg',
-//         imgJSON: 'where the wild things are img JSON'
-//     }
-// ];
 
 const createDrawing = async (req, res, next) => {
     const validationErrors = validationResult(req);
@@ -48,14 +16,40 @@ const createDrawing = async (req, res, next) => {
     const newDrawing = new Drawing({
         title,
         description,
-        artist,
         date: new Date(),
         imgURL,
-        imgJSON
+        imgJSON,
+        artist,
     });
 
+    let user;
     try {
-        await newDrawing.save();
+        user = await User.findById(artist)
+    } catch (err) {
+        const error = new HttpError(
+            'Creating drawing failed when finding user by id.'
+        );
+        return next(error)
+    };
+
+    if (!user) {
+        const error = new HttpError(
+            'Could not find user for provided id',
+            404
+        );
+        return next(error)
+    };
+
+    console.log(user)
+
+    try {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+        await newDrawing.save({ session: session });
+        user.drawings.push(newDrawing);
+        await user.save({ session: session });
+        await session.commitTransaction();
+        // create session and transaction here to make sure that if any of the operations here fail, all operations will be cancelled.
     } catch (err) {
         const error = new HttpError(
             'Creating drawing failed, try again.',
@@ -65,7 +59,7 @@ const createDrawing = async (req, res, next) => {
     };
 
     res.status(201);
-    res.json({ drawing: newDrawing });
+    res.json({ drawing: newDrawing.toObject({ getters: true }) });
 };
 
 const getAllDrawings = async (req, res, next) => {
@@ -180,7 +174,8 @@ const deleteDrawing = async (req, res, next) => {
 
     let drawing;
     try {
-        drawing = await Drawing.findById(drawingId);
+        drawing = await Drawing.findById(drawingId).populate('artist');
+        //use populate so we can access drawing.artist later in the function
     } catch (err) {
         const error = new HttpError(
             'Something went wrong, could not delete drawing.',
@@ -189,8 +184,21 @@ const deleteDrawing = async (req, res, next) => {
         return next(error);
     };
 
+    if (!drawing) {
+        const error = new HttpError(
+            'Could not find a drawing for the provided id',
+            404
+        );
+        return next(error)
+    };
+
     try {
-        await drawing.deleteOne();
+        const session = await mongoose.startSession();
+        session.startTransaction();
+        await drawing.deleteOne({ session: session });
+        drawing.artist.drawings.pull(drawing);
+        await drawing.artist.save({ session: session });
+        await session.commitTransaction();
     } catch (err) {
         const error = new HttpError(
             'Deleting drawing from database failed, try again.',

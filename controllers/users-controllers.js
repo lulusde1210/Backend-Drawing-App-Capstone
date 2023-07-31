@@ -1,28 +1,6 @@
 const HttpError = require('../models/http-error');
-const { v4: uuidv4 } = require('uuid');
 const { validationResult } = require('express-validator')
 const User = require('../models/user');
-
-// let usersData = [
-//     {
-//         id: 'u1',
-//         username: 'LuLu',
-//         email: 'lulu@gmail.com',
-//         password: '123'
-//     },
-//     {
-//         id: 'u2',
-//         username: 'Mickey',
-//         email: 'mickey@gmail.com',
-//         password: '123'
-//     },
-//     {
-//         id: 'u3',
-//         username: 'Verra',
-//         email: 'verra@gmail.com',
-//         password: '123'
-//     },
-// ];
 
 const signup = async (req, res, next) => {
     const validationErrors = validationResult(req);
@@ -30,7 +8,7 @@ const signup = async (req, res, next) => {
         return next(new HttpError('Invalid Input', 422))
     };
 
-    const { username, email, image, password, drawings } = req.body;
+    const { username, email, image, password } = req.body;
 
     let existingUser;
     try {
@@ -56,7 +34,7 @@ const signup = async (req, res, next) => {
         email,
         image,
         password,
-        drawings
+        drawings: []
     });
 
     try {
