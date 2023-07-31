@@ -34,7 +34,6 @@ app.use((error, req, res, next) => {
 })
 
 mongoose
-    // .connect('mongodb+srv://lulu:3R558WhiGXuWkpnn@cluster0.hizlluw.mongodb.net/drawings?retryWrites=true&w=majority')
     .connect(process.env.DB_URL)
     .then(() => {
         app.listen(5000);
