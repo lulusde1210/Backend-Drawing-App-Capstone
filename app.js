@@ -1,7 +1,6 @@
-// if (process.env.NODE_ENV !== 'production') {
-//     require('dotenv').config();
-// }// this code will always run in develpment mode
-
+if (process.env.NODE_ENV !== 'production') {
+    require('dotenv').config();
+}// this code will always run in develpment mode
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -12,7 +11,6 @@ const usersRoutes = require('./routes/users-routes');
 const HttpError = require('./models/http-error');
 
 const app = express();
-const dbUrl = process.env.DB_URL;
 
 //middleware to parse the req body to regular js data(it has to be before the routes middleware)
 app.use(bodyParser.json())
@@ -36,7 +34,8 @@ app.use((error, req, res, next) => {
 })
 
 mongoose
-    .connect('mongodb+srv://lulu:3R558WhiGXuWkpnn@cluster0.hizlluw.mongodb.net/drawings?retryWrites=true&w=majority')
+    // .connect('mongodb+srv://lulu:3R558WhiGXuWkpnn@cluster0.hizlluw.mongodb.net/drawings?retryWrites=true&w=majority')
+    .connect(process.env.DB_URL)
     .then(() => {
         app.listen(5000);
     })
