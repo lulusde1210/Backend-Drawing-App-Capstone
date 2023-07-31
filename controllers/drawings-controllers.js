@@ -40,7 +40,7 @@ const Drawing = require('../models/drawing');
 const createDrawing = async (req, res, next) => {
     const validationErrors = validationResult(req);
     if (!validationErrors.isEmpty()) {
-        throw new HttpError('Invalid Input', 422)
+        return next(new HttpError('Invalid Input', 422))
     };
 
     const { title, description, artist, imgURL, imgJSON } = req.body;
@@ -68,11 +68,19 @@ const createDrawing = async (req, res, next) => {
     res.json({ drawing: newDrawing });
 };
 
-const getAllDrawings = (req, res, next) => {
-    const drawings = drawingsData;
+const getAllDrawings = async (req, res, next) => {
+    let drawings;
+    try {
+        drawings = await Drawing.find();
+    } catch (err) {
+        const error = new HttpError(
+            'Something went wrong with fetching all drawings.'
+        );
+        return next(error)
+    };
 
     res.status(200);
-    res.json({ drawings });
+    res.json({ drawings: drawings.map(drawing => drawing.toObject({ getters: true })) });
 };
 
 const getDrawingById = async (req, res, next) => {
@@ -129,7 +137,7 @@ const getDrawingsByUserId = async (req, res, next) => {
 const updateDrawing = async (req, res, next) => {
     const validationErrors = validationResult(req);
     if (!validationErrors.isEmpty()) {
-        throw new HttpError('Invalid Input', 422)
+        return next(new HttpError('Invalid Input', 422))
     };
 
     const { title, description, imgURL, imgJSON } = req.body;
