@@ -8,7 +8,7 @@ const signup = async (req, res, next) => {
         return next(new HttpError('Invalid Input', 422))
     };
 
-    const { username, email, image, password } = req.body;
+    const { username, email, password } = req.body;
 
     let existingUser;
     try {
@@ -32,8 +32,8 @@ const signup = async (req, res, next) => {
     const newUser = new User({
         username,
         email,
-        image,
         password,
+        image: 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png',
         drawings: []
     });
 
@@ -81,7 +81,7 @@ const login = async (req, res, next) => {
     }
 
     if (existingUser.password === password) {
-        res.json({ message: 'Logged in' })
+        res.json({ user: existingUser.toObject({ getters: true }) })
     }
 };
 

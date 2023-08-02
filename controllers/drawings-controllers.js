@@ -40,8 +40,6 @@ const createDrawing = async (req, res, next) => {
         return next(error)
     };
 
-    console.log(user)
-
     try {
         const session = await mongoose.startSession();
         session.startTransaction();
@@ -117,12 +115,12 @@ const getDrawingsByUserId = async (req, res, next) => {
         return next(error);
     };
 
-    if (!drawings || drawings.length === 0) {
-        const error = new HttpError(
-            'Could not find a drawing for the provided user id',
-            404);
-        return next(error)
-    };
+    // if (!drawings || drawings.length === 0) {
+    //     const error = new HttpError(
+    //         'Could not find a drawing for the provided user id',
+    //         404);
+    //     return next(error)
+    // };
 
     res.json({ drawings: drawings.map(drawing => drawing.toObject({ getters: true })) })
 };
