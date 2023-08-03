@@ -3,7 +3,6 @@ const router = express.Router();
 const usersControllers = require('../controllers/users-controllers');
 const { check } = require('express-validator');
 
-
 //  api/users
 const userSignupInputValidation =
     [
@@ -15,6 +14,8 @@ const userSignupInputValidation =
 router.post('/signup', userSignupInputValidation, usersControllers.signup)
 
 router.post('/login', usersControllers.login)
+
+router.patch('/user/update', usersControllers.updateUser)
 
 router.get('/', usersControllers.getAllUsers)
 

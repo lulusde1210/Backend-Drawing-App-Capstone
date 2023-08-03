@@ -8,7 +8,7 @@ const signup = async (req, res, next) => {
         return next(new HttpError('Invalid Input', 422))
     };
 
-    const { username, email, password } = req.body;
+    const { username, email, password, image } = req.body;
 
     let existingUser;
     try {
@@ -33,7 +33,7 @@ const signup = async (req, res, next) => {
         username,
         email,
         password,
-        image: 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png',
+        image,
         drawings: []
     });
 
@@ -127,7 +127,53 @@ const getUserByUserId = async (req, res, next) => {
     res.json({ user: user.toObject({ getters: true }) });
 };
 
+
+const updateUser = async (req, res, next) => {
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+        return next(new HttpError('Invalid Input', 422))
+    };
+
+    const { username, email, password, image, userId } = req.body;
+
+    let user;
+
+    try {
+        user = await User.findById(userId);
+    } catch (err) {
+        const error = new HttpError(
+            'Something went wrong, could not update a user.',
+            500
+        );
+        return next(error);
+    };
+
+    if (!user) {
+        const error = new HttpError('Could not find user for this id.', 404);
+        return next(error);
+    }
+
+    user.username = username;
+    user.email = email;
+    user.password = password;
+    user.image = image;
+
+    try {
+        await user.save();
+    } catch (err) {
+        const error = new HttpError(
+            'Updating user failed, try again.',
+            500
+        )
+        return next(error)
+    };
+
+    res.status(200);
+    res.json({ user: user.toObject({ getters: true }) })
+};
+
 exports.signup = signup;
 exports.login = login;
 exports.getAllUsers = getAllUsers;
 exports.getUserByUserId = getUserByUserId;
+exports.updateUser = updateUser;

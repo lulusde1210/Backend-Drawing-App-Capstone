@@ -5,6 +5,7 @@ if (process.env.NODE_ENV !== 'production') {
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const cors = require('cors')
 
 const drawingsRoutes = require('./routes/drawings-routes');
 const usersRoutes = require('./routes/users-routes');
@@ -12,21 +13,25 @@ const HttpError = require('./models/http-error');
 
 const app = express();
 
-//middleware to parse the req body to regular js data(it has to be before the routes middleware)
-app.use(bodyParser.json())
+app.use(bodyParser.json({ limit: '10mb' }))
 
-//add middleware to fic CORS issue when connecting frontend
 app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*'); //allow any domain to send request
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader(
         'Access-Control-Allow-Headers',
         'Origin, X-Requested-With, Content-Type, Accept, Authorization')
     res.setHeader(
         'Access-Control-Allow-Methods',
-        'GET, POST, PATCH, DELETE'
+        'GET, POST, PATCH, DELETE, PUT'
     );
     next();
 });
+
+// app.use(cors({
+//     allowedHeaders: "*",
+//     allowMethods: "*",
+//     origin: "*"
+// }))
 
 app.use('/api/drawings', drawingsRoutes);
 app.use('/api/users', usersRoutes);
