@@ -1,6 +1,7 @@
 const HttpError = require('../models/http-error');
 const { validationResult } = require('express-validator')
 const User = require('../models/user');
+const generateToken = require('../util/generateToken.js');
 
 const signup = async (req, res, next) => {
     const validationErrors = validationResult(req);
@@ -40,8 +41,6 @@ const signup = async (req, res, next) => {
     try {
         await newUser.save();
     } catch (err) {
-        console.log(err)
-
         const error = new HttpError(
             'Signing up failed, try again.',
             500
@@ -49,8 +48,17 @@ const signup = async (req, res, next) => {
         return next(error)
     };
 
+    generateToken(res, newUser._id)
     res.status(201)
-    res.json({ user: newUser.toObject({ getters: true }) })
+    res.json({
+        user:
+        {
+            id: newUser._id,
+            username: newUser.username,
+            email: newUser.email,
+            image: newUser.image
+        }
+    })
 };
 
 const login = async (req, res, next) => {
@@ -72,18 +80,47 @@ const login = async (req, res, next) => {
         return next(error)
     };
 
-    if (!existingUser || existingUser.password !== password) {
+
+
+    if (!existingUser) {
         const error = new HttpError(
-            'Could not identify user, either email or password is not correct',
+            'Could not identify user, try again.',
             401
         );
         return next(error)
     }
 
-    if (existingUser.password === password) {
-        res.json({ user: existingUser.toObject({ getters: true }) })
+    if (existingUser && (await existingUser.matchPassword(password))) {
+        generateToken(res, existingUser._id)
+        res.status(201)
+        res.json({
+            user:
+            {
+                id: existingUser._id,
+                username: existingUser.username,
+                email: existingUser.email,
+                image: existingUser.image
+            }
+        });
+    } else {
+        const error = new HttpError(
+            'Invalid email or password',
+            401
+        );
+        return next(error)
     }
+
 };
+
+const logout = async (req, res, next) => {
+    res.cookie('jwt', '', {
+        httpOnly: true,
+        expires: new Date(0)
+    });
+
+    res.status(200);
+    res.json({ message: 'User Logged out.' })
+}
 
 const getAllUsers = async (req, res, next) => {
     let users;
@@ -169,7 +206,15 @@ const updateUser = async (req, res, next) => {
     };
 
     res.status(200);
-    res.json({ user: user.toObject({ getters: true }) })
+    res.json({
+        user:
+        {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            image: user.image
+        }
+    })
 };
 
 exports.signup = signup;
@@ -177,3 +222,4 @@ exports.login = login;
 exports.getAllUsers = getAllUsers;
 exports.getUserByUserId = getUserByUserId;
 exports.updateUser = updateUser;
+exports.logout = logout;

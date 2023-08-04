@@ -2,6 +2,7 @@ const express = require('express');
 const drawingsControllers = require('../controllers/drawings-controllers');
 const router = express.Router();
 const { check } = require('express-validator');
+const { protect } = require('../middleware/authMiddleware');
 
 //  api/drawings
 const drawingInputValidation =
@@ -10,15 +11,15 @@ const drawingInputValidation =
         check('description').not().isEmpty()
     ]
 
-router.post('/', drawingInputValidation, drawingsControllers.createDrawing)
+router.post('/', protect, drawingInputValidation, drawingsControllers.createDrawing)
 
 router.get('/', drawingsControllers.getAllDrawings)
 
 router.get('/:id', drawingsControllers.getDrawingById);
 
-router.patch('/:id', drawingInputValidation, drawingsControllers.updateDrawing);
+router.patch('/:id', protect, drawingInputValidation, drawingsControllers.updateDrawing);
 
-router.delete('/:id', drawingsControllers.deleteDrawing);
+router.delete('/:id', protect, drawingsControllers.deleteDrawing);
 
 router.get('/user/:uid', drawingsControllers.getDrawingsByUserId)
 
