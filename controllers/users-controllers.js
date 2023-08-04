@@ -80,8 +80,6 @@ const login = async (req, res, next) => {
         return next(error)
     };
 
-
-
     if (!existingUser) {
         const error = new HttpError(
             'Could not identify user, try again.',
@@ -126,7 +124,6 @@ const getAllUsers = async (req, res, next) => {
     let users;
     try {
         users = await User.find({}, '-password');
-        //take password property away from the returned user response
     } catch (err) {
         const error = new HttpError(
             'Something went wrong with feching all users',
@@ -165,6 +162,59 @@ const getUserByUserId = async (req, res, next) => {
 };
 
 
+// const updateUser = async (req, res, next) => {
+//     const validationErrors = validationResult(req);
+//     if (!validationErrors.isEmpty()) {
+//         return next(new HttpError('Invalid Input', 422))
+//     };
+
+//     const { username, email, password, image, userId } = req.body;
+
+//     let user;
+
+//     try {
+//         user = await User.findById(userId);
+//     } catch (err) {
+//         const error = new HttpError(
+//             'Something went wrong, could not update a user.',
+//             500
+//         );
+//         return next(error);
+//     };
+
+//     if (!user) {
+//         const error = new HttpError('Could not find user for this id.', 404);
+//         return next(error);
+//     }
+
+//     user.username = username;
+//     user.email = email;
+//     user.password = password;
+//     user.image = image;
+
+//     try {
+//         await user.save();
+//     } catch (err) {
+//         const error = new HttpError(
+//             'Updating user failed, try again.',
+//             500
+//         )
+//         return next(error)
+//     };
+
+//     res.status(200);
+//     res.json({
+//         user:
+//         {
+//             id: user._id,
+//             username: user.username,
+//             email: user.email,
+//             image: user.image
+//         }
+//     })
+// };
+
+
 const updateUser = async (req, res, next) => {
     const validationErrors = validationResult(req);
     if (!validationErrors.isEmpty()) {
@@ -176,7 +226,7 @@ const updateUser = async (req, res, next) => {
     let user;
 
     try {
-        user = await User.findById(userId);
+        user = await User.findById(req.user._id);
     } catch (err) {
         const error = new HttpError(
             'Something went wrong, could not update a user.',
@@ -188,12 +238,16 @@ const updateUser = async (req, res, next) => {
     if (!user) {
         const error = new HttpError('Could not find user for this id.', 404);
         return next(error);
+    } else {
+        user.username = username || user.name;
+        user.email = email || user.email;
+        user.image = image || user.image;
+
+        if (password) {
+            user.password = password
+        }
     }
 
-    user.username = username;
-    user.email = email;
-    user.password = password;
-    user.image = image;
 
     try {
         await user.save();

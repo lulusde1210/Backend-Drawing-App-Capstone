@@ -12,10 +12,8 @@ const userSchema = new Schema({
     drawings: [{ type: mongoose.Types.ObjectId, required: true, ref: 'Drawing' }],
 });
 
-//make sure the user email is unique using mongoose-unique-validator package
 userSchema.plugin(uniqueValidator);
 
-//hash the password before saved to database
 userSchema.pre('save', async function (next) {
     if (!this.isModified('password')) {
         next();
