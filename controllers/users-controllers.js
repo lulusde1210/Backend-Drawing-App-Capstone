@@ -221,7 +221,7 @@ const updateUser = async (req, res, next) => {
         return next(new HttpError('Invalid Input', 422))
     };
 
-    const { username, email, password, image, userId } = req.body;
+    const { username, email, password, image } = req.body;
 
     let user;
 

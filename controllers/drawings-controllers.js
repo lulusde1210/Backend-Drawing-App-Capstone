@@ -145,6 +145,14 @@ const updateDrawing = async (req, res, next) => {
         return next(error);
     }
 
+    if (drawing.artist._id.toString() !== req.user._id.toString()) {
+        const error = new HttpError(
+            'Sorry, you are not allowed to delete this drawing.',
+            401
+        );
+        return next(error);
+    }
+
     drawing.title = title;
     drawing.description = description;
     drawing.date = new Date();
@@ -180,6 +188,7 @@ const deleteDrawing = async (req, res, next) => {
         return next(error);
     };
 
+
     if (!drawing) {
         const error = new HttpError(
             'Could not find a drawing for the provided id',
@@ -187,6 +196,14 @@ const deleteDrawing = async (req, res, next) => {
         );
         return next(error)
     };
+
+    if (drawing.artist._id.toString() !== req.user._id.toString()) {
+        const error = new HttpError(
+            'Sorry, you are not allowed to delete this drawing.',
+            401
+        );
+        return next(error);
+    }
 
     try {
         const session = await mongoose.startSession();
