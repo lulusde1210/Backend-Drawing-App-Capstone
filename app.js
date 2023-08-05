@@ -9,7 +9,7 @@ const cookieParser = require('cookie-parser');
 const drawingsRoutes = require('./routes/drawings-routes');
 const usersRoutes = require('./routes/users-routes');
 const HttpError = require('./models/http-error');
-// const cors = require('cors')
+const cors = require('cors')
 
 const app = express();
 
@@ -29,11 +29,11 @@ app.use(cookieParser());
 //     next();
 // });
 
-// app.use(cors({
-//     allowedHeaders: "*",
-//     allowMethods: "*",
-//     origin: "*"
-// }))
+app.use(cors({
+    allowedHeaders: "*",
+    allowMethods: "*",
+    origin: "*"
+}))
 
 app.use('/api/drawings', drawingsRoutes);
 app.use('/api/users', usersRoutes);

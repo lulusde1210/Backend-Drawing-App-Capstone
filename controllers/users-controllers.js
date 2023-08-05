@@ -248,7 +248,6 @@ const updateUser = async (req, res, next) => {
         }
     }
 
-
     try {
         await user.save();
     } catch (err) {
