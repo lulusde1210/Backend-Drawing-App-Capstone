@@ -8,8 +8,8 @@ const drawingSchema = new Schema({
     date: { type: Date, required: true },
     imgURL: { type: String, required: true },
     imgJSON: { type: String, required: true },
+    likeCount: { type: Number, required: true },
     artist: { type: mongoose.Types.ObjectId, required: true, ref: 'User' },
-    //establish one to many relationship
 });
 
 module.exports = mongoose.model('Drawing', drawingSchema);

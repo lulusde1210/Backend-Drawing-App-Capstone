@@ -21,6 +21,8 @@ router.patch('/:id', protect, drawingInputValidation, drawingsControllers.update
 
 router.delete('/:id', protect, drawingsControllers.deleteDrawing);
 
+router.patch('/:id/like', drawingsControllers.updateLikeCount);
+
 router.get('/user/:uid', drawingsControllers.getDrawingsByUserId)
 
 

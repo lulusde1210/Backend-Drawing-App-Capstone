@@ -20,6 +20,7 @@ const createDrawing = async (req, res, next) => {
         imgURL,
         imgJSON,
         artist,
+        likeCount: 0
     });
 
     let user;
@@ -48,7 +49,6 @@ const createDrawing = async (req, res, next) => {
         user.drawings.push(newDrawing);
         await user.save({ session: session });
         await session.commitTransaction();
-        // create session and transaction here to make sure that if any of the operations here fail, all operations will be cancelled.
     } catch (err) {
         const error = new HttpError(
             'Creating drawing failed, try again.',
@@ -180,7 +180,6 @@ const deleteDrawing = async (req, res, next) => {
     let drawing;
     try {
         drawing = await Drawing.findById(drawingId).populate('artist');
-        //use populate so we can access drawing.artist later in the function
     } catch (err) {
         const error = new HttpError(
             'Something went wrong, could not delete drawing.',
@@ -226,9 +225,49 @@ const deleteDrawing = async (req, res, next) => {
 };
 
 
+const updateLikeCount = async (req, res, next) => {
+    const drawingId = req.params.id;
+
+    let drawing;
+    try {
+        drawing = await Drawing.findById(drawingId);
+    } catch (err) {
+        const error = new HttpError(
+            'Something went wrong, could not update like count.',
+            500
+        );
+        return next(error);
+    };
+
+    if (!drawing) {
+        const error = new HttpError(
+            'Could not find a drawing for the provided id',
+            404
+        );
+        return next(error)
+    };
+
+    drawing.likeCount += 1
+
+    try {
+        await drawing.save();
+    } catch (err) {
+        const error = new HttpError(
+            'Updating drawing failed, try again.',
+            500
+        )
+        return next(error)
+    };
+
+    res.status(200)
+    res.json({ drawing: drawing.toObject({ getters: true }) })
+}
+
+
 exports.createDrawing = createDrawing;
 exports.getAllDrawings = getAllDrawings;
 exports.getDrawingById = getDrawingById;
 exports.getDrawingsByUserId = getDrawingsByUserId;
 exports.updateDrawing = updateDrawing;
 exports.deleteDrawing = deleteDrawing;
+exports.updateLikeCount = updateLikeCount;
