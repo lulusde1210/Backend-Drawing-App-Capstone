@@ -64,7 +64,7 @@ const createDrawing = async (req, res, next) => {
 const getAllDrawings = async (req, res, next) => {
     let drawings;
     try {
-        drawings = await Drawing.find();
+        drawings = await Drawing.find().populate('artist');
     } catch (err) {
         const error = new HttpError(
             'Something went wrong with fetching all drawings.'
@@ -76,12 +76,13 @@ const getAllDrawings = async (req, res, next) => {
     res.json({ drawings: drawings.map(drawing => drawing.toObject({ getters: true })) });
 };
 
+
 const getDrawingById = async (req, res, next) => {
     const drawingId = req.params.id;
     let drawing;
 
     try {
-        drawing = await Drawing.findById(drawingId);
+        drawing = await Drawing.findById(drawingId).populate('artist');
     } catch (err) {
         const error = new HttpError(
             'Something went wrong, could not find a drawing.',
@@ -106,7 +107,7 @@ const getDrawingsByUserId = async (req, res, next) => {
     let drawings;
 
     try {
-        drawings = await Drawing.find({ artist: userId });
+        drawings = await Drawing.find({ artist: userId }).populate('artist');
     } catch (err) {
         const error = new HttpError(
             'Fetching drawings failed, try again.',
