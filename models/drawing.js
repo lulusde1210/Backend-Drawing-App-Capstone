@@ -10,6 +10,7 @@ const drawingSchema = new Schema({
     imgJSON: { type: String, required: true },
     likeCount: { type: Number, required: true },
     artist: { type: mongoose.Types.ObjectId, required: true, ref: 'User' },
+    comments: [{ type: mongoose.Types.ObjectId, required: true, ref: 'Comment' }],
 });
 
 module.exports = mongoose.model('Drawing', drawingSchema);

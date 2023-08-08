@@ -26,5 +26,4 @@ router.patch('/:id/like', drawingsControllers.updateLikeCount);
 router.get('/user/:uid', drawingsControllers.getDrawingsByUserId)
 
 
-
 module.exports = router;

@@ -2,6 +2,7 @@ const HttpError = require('../models/http-error');
 const { validationResult } = require('express-validator');
 const Drawing = require('../models/drawing');
 const User = require('../models/user');
+const Comment = require('../models/comment');
 const mongoose = require('mongoose');
 
 
@@ -20,7 +21,8 @@ const createDrawing = async (req, res, next) => {
         imgURL,
         imgJSON,
         artist,
-        likeCount: 0
+        likeCount: 0,
+        comments: []
     });
 
     let user;
@@ -82,7 +84,7 @@ const getDrawingById = async (req, res, next) => {
     let drawing;
 
     try {
-        drawing = await Drawing.findById(drawingId).populate('artist');
+        drawing = await Drawing.findById(drawingId).populate('artist').populate('comments');
     } catch (err) {
         const error = new HttpError(
             'Something went wrong, could not find a drawing.',
@@ -116,6 +118,7 @@ const getDrawingsByUserId = async (req, res, next) => {
         return next(error);
     };
 
+    res.status(200)
     res.json({ drawings: drawings.map(drawing => drawing.toObject({ getters: true })) })
 };
 
@@ -264,6 +267,9 @@ const updateLikeCount = async (req, res, next) => {
 }
 
 
+
+
+
 exports.createDrawing = createDrawing;
 exports.getAllDrawings = getAllDrawings;
 exports.getDrawingById = getDrawingById;
@@ -271,3 +277,4 @@ exports.getDrawingsByUserId = getDrawingsByUserId;
 exports.updateDrawing = updateDrawing;
 exports.deleteDrawing = deleteDrawing;
 exports.updateLikeCount = updateLikeCount;
+

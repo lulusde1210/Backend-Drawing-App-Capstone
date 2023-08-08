@@ -8,7 +8,9 @@ const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const drawingsRoutes = require('./routes/drawings-routes');
 const usersRoutes = require('./routes/users-routes');
+const commentsRoutes = require('./routes/comments-routes')
 const HttpError = require('./models/http-error');
+
 const cors = require('cors')
 
 const app = express();
@@ -37,6 +39,7 @@ app.use(cors({
 
 app.use('/api/drawings', drawingsRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/comments', commentsRoutes);
 
 app.use((req, res, next) => {
     const error = new HttpError('Could not find this route', 404);
