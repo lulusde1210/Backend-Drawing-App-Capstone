@@ -35,7 +35,9 @@ const signup = async (req, res, next) => {
         email,
         password,
         image,
-        drawings: []
+        drawings: [],
+        following: [],
+        followers: []
     });
 
     try {
@@ -82,7 +84,7 @@ const login = async (req, res, next) => {
 
     if (!existingUser) {
         const error = new HttpError(
-            'Could not identify user, try again.',
+            "Looks like you haven't sign up yet! Please sign up.",
             401
         );
         return next(error)
@@ -216,9 +218,69 @@ const updateUser = async (req, res, next) => {
     })
 };
 
+const addFollowing = async (req, res, next) => {
+    console.log(req.user)
+    User.findByIdAndUpdate(req.body.followId, {
+        $push: { followers: req.user._id }
+    }, {
+        new: true
+    }, (err, result) => {
+        if (err) {
+            return res.status(422).json({ error: err })
+        }
+        User.findByIdAndUpdate(req.user._id, {
+            $push: { following: req.body.followId }
+        }, {
+            new: true
+        }).then(result => {
+            res.json(result)
+
+        })
+            .catch(err => { return res.status(422).json({ error: err }) })
+    }
+    )
+}
+// const { followId } = req.body;
+// User.findByIdAndUpdate(followId,
+//     { $push: { followers: req.user._id } },
+//     { new: true },
+//     (err, result) => {
+//         if (err) {
+//             const error = new HttpError(
+//                 'Something went wrong when following, try again.',
+//                 422
+//             );
+//             return next(error)
+//         }
+//         User.findByIdAndUpdate(req.user._id,
+//             { $push: { following: followId } },
+//             { new: true })
+//             .then(result => {
+//                 res.json(result)
+//             }).catch(err => {
+//                 const error = new HttpError(
+//                     'Something went wrong when following, try again.',
+//                     422
+//                 );
+//                 return next(error)
+//             })
+//     })
+// }
+
+
+
+
+
+
+const removeFollowing = async (req, res, next) => {
+
+}
+
 exports.signup = signup;
 exports.login = login;
 exports.getAllUsers = getAllUsers;
 exports.getUserByUserId = getUserByUserId;
 exports.updateUser = updateUser;
 exports.logout = logout;
+exports.addFollowing = addFollowing;
+exports.removeFollowing = removeFollowing;

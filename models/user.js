@@ -10,6 +10,8 @@ const userSchema = new Schema({
     password: { type: String, required: true, minlength: 6 },
     image: { type: String, required: true },
     drawings: [{ type: mongoose.Types.ObjectId, required: true, ref: 'Drawing' }],
+    following: [{ type: mongoose.Types.ObjectId, required: true, ref: 'User' }],
+    followers: [{ type: mongoose.Types.ObjectId, required: true, ref: 'User' }],
 });
 
 userSchema.plugin(uniqueValidator);

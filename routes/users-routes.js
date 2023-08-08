@@ -25,7 +25,8 @@ router.get('/', usersControllers.getAllUsers)
 
 router.get('/:uid', usersControllers.getUserByUserId)
 
+router.put('/follow', usersControllers.addFollowing)
 
-
+router.put('/unfollow', usersControllers.removeFollowing)
 
 module.exports = router;
