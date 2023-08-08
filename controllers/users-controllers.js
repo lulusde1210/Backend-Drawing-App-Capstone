@@ -2,6 +2,7 @@ const HttpError = require('../models/http-error');
 const { validationResult } = require('express-validator')
 const User = require('../models/user');
 const generateToken = require('../util/generateToken.js');
+const mongoose = require('mongoose');
 
 const signup = async (req, res, next) => {
     const validationErrors = validationResult(req);
@@ -143,7 +144,7 @@ const getUserByUserId = async (req, res, next) => {
 
     let user;
     try {
-        user = await User.findById(userId);
+        user = await User.findById(userId).populate('followers');
     } catch (err) {
         const error = new HttpError(
             'Something went wrong with feching one user',
@@ -260,8 +261,46 @@ const addFollowing = async (req, res, next) => {
 }
 
 const removeFollowing = async (req, res, next) => {
+    const { followId } = req.body;
 
+    let user;
+
+    try {
+        user = await User.findById(followId);
+    } catch (err) {
+        const error = new HttpError(
+            'Something went wrong, could not unfollow the user.',
+            500
+        );
+        return next(error);
+    };
+
+    if (!user) {
+        const error = new HttpError('Could not find user for this id.', 404);
+        return next(error);
+    }
+
+    try {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+        user.followers.pull(req.user._id);
+        req.user.following.pull(user._id)
+        await user.save({ session: session });
+        await req.user.save({ session: session });
+        await session.commitTransaction();
+    } catch (err) {
+        const error = new HttpError(
+            'Unfollowing failed, try again.',
+            500
+        )
+        return next(error)
+    };
+
+    res.status(200);
+    res.json({ message: 'You have succesfully unfollowed the artist.' })
 }
+
+
 
 exports.signup = signup;
 exports.login = login;
