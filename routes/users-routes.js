@@ -23,10 +23,12 @@ router.patch('/user/update', protect, usersControllers.updateUser)
 
 router.get('/', usersControllers.getAllUsers)
 
+router.patch('/follow', protect, usersControllers.addFollowing)
+
+router.patch('/unfollow', protect, usersControllers.removeFollowing)
+
 router.get('/:uid', usersControllers.getUserByUserId)
 
-router.put('/follow', usersControllers.addFollowing)
 
-router.put('/unfollow', usersControllers.removeFollowing)
 
 module.exports = router;

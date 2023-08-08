@@ -219,58 +219,45 @@ const updateUser = async (req, res, next) => {
 };
 
 const addFollowing = async (req, res, next) => {
-    console.log(req.user)
-    User.findByIdAndUpdate(req.body.followId, {
-        $push: { followers: req.user._id }
-    }, {
-        new: true
-    }, (err, result) => {
-        if (err) {
-            return res.status(422).json({ error: err })
-        }
-        User.findByIdAndUpdate(req.user._id, {
-            $push: { following: req.body.followId }
-        }, {
-            new: true
-        }).then(result => {
-            res.json(result)
+    const { followId } = req.body;
 
-        })
-            .catch(err => { return res.status(422).json({ error: err }) })
+    let user;
+
+    try {
+        user = await User.findById(followId);
+    } catch (err) {
+        const error = new HttpError(
+            'Something went wrong, could not follow the user.',
+            500
+        );
+        return next(error);
+    };
+
+    if (!user) {
+        const error = new HttpError('Could not find user for this id.', 404);
+        return next(error);
     }
-    )
+
+    try {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+        user.followers.push(req.user._id);
+        req.user.following.push(user._id)
+        await user.save({ session: session });
+        await req.user.save({ session: session });
+        await session.commitTransaction();
+    } catch (err) {
+        const error = new HttpError(
+            'Following failed, try again.',
+            500
+        )
+        return next(error)
+    };
+
+    res.status(200);
+    res.json({ message: 'You have succesfully followed the artist.' })
+
 }
-// const { followId } = req.body;
-// User.findByIdAndUpdate(followId,
-//     { $push: { followers: req.user._id } },
-//     { new: true },
-//     (err, result) => {
-//         if (err) {
-//             const error = new HttpError(
-//                 'Something went wrong when following, try again.',
-//                 422
-//             );
-//             return next(error)
-//         }
-//         User.findByIdAndUpdate(req.user._id,
-//             { $push: { following: followId } },
-//             { new: true })
-//             .then(result => {
-//                 res.json(result)
-//             }).catch(err => {
-//                 const error = new HttpError(
-//                     'Something went wrong when following, try again.',
-//                     422
-//                 );
-//                 return next(error)
-//             })
-//     })
-// }
-
-
-
-
-
 
 const removeFollowing = async (req, res, next) => {
 
