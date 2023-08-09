@@ -144,7 +144,7 @@ const getUserByUserId = async (req, res, next) => {
 
     let user;
     try {
-        user = await User.findById(userId).populate('followers');
+        user = await User.findById(userId).populate('followers').populate('following');
     } catch (err) {
         const error = new HttpError(
             'Something went wrong with feching one user',
@@ -222,8 +222,12 @@ const updateUser = async (req, res, next) => {
 const addFollowing = async (req, res, next) => {
     const { followId } = req.body;
 
-    let user;
+    if (req.user.id === followId) {
+        const error = new HttpError("You can't follow yourself", 404);
+        return next(error);
+    }
 
+    let user;
     try {
         user = await User.findById(followId);
     } catch (err) {
@@ -242,16 +246,22 @@ const addFollowing = async (req, res, next) => {
     try {
         const session = await mongoose.startSession();
         session.startTransaction();
-        user.followers.push(req.user._id);
-        req.user.following.push(user._id)
+
+        const found = user.followers.some(followId => followId.equals(req.user.id))
+
+        if (!found && req.user.id !== followId) {
+            user.followers.push(req.user.id);
+        } else {
+            const error = new HttpError("You've already followed this artist.", 500)
+            return next(error)
+        }
+
+        req.user.following.push(user.id)
         await user.save({ session: session });
         await req.user.save({ session: session });
         await session.commitTransaction();
     } catch (err) {
-        const error = new HttpError(
-            'Following failed, try again.',
-            500
-        )
+        const error = new HttpError('Following failed, try again.', 500)
         return next(error)
     };
 
