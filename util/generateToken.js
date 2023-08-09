@@ -5,7 +5,7 @@ const generateToken = (res, userId) => {
         (
             { userId },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' }
+            { expiresIn: '1d' }
         );
 
     res.cookie('jwt', token, {

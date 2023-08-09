@@ -8,7 +8,7 @@ const protect = async (req, res, next) => {
         token = req.cookies.jwt;
     } catch (err) {
         const error = new HttpError(
-            'Something went wrong'
+            "Something went wrong,can't get token"
         );
         return next(error)
     }
@@ -29,11 +29,10 @@ const protect = async (req, res, next) => {
 
     } else {
         const error = new HttpError(
-            'Not authorized, no token.'
+            'Not authorized, please log in.'
         );
         return next(error)
     };
-
 };
 
 exports.protect = protect
