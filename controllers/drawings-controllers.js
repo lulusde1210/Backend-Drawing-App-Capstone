@@ -3,7 +3,6 @@ const { validationResult } = require('express-validator');
 const Drawing = require('../models/drawing');
 const User = require('../models/user');
 const mongoose = require('mongoose');
-const { query } = require('express');
 
 
 const createDrawing = async (req, res, next) => {
