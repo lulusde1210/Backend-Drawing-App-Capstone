@@ -3,6 +3,7 @@ const { validationResult } = require('express-validator');
 const Drawing = require('../models/drawing');
 const User = require('../models/user');
 const mongoose = require('mongoose');
+const { query } = require('express');
 
 
 const createDrawing = async (req, res, next) => {
@@ -64,8 +65,15 @@ const createDrawing = async (req, res, next) => {
 
 const getAllDrawings = async (req, res, next) => {
     let drawings;
+    let options = {};
     try {
-        drawings = await Drawing.find().populate('artist');
+        if (req.query.search) {
+            options = {
+                ...options,
+                title: { $regex: req.query.search.toString(), $options: 'i' }
+            }
+        }
+        drawings = await Drawing.find(options).populate('artist', 'username image')
     } catch (err) {
         const error = new HttpError(
             'Something went wrong with fetching all drawings.'
@@ -76,7 +84,6 @@ const getAllDrawings = async (req, res, next) => {
     res.status(200);
     res.json({ drawings: drawings.map(drawing => drawing.toObject({ getters: true })) });
 };
-
 
 const getDrawingById = async (req, res, next) => {
     const drawingId = req.params.id;
