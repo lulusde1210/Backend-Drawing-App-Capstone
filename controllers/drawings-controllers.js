@@ -3,6 +3,13 @@ const { validationResult } = require('express-validator');
 const Drawing = require('../models/drawing');
 const User = require('../models/user');
 const mongoose = require('mongoose');
+const crypto = require('crypto')
+const { uploadFile, deleteFile } = require('../aws')
+
+const bucketName = process.env.BUCKET_NAME
+const bucketRegion = process.env.BUCKET_REGION
+
+const generateFileName = (bytes = 32) => crypto.randomBytes(bytes).toString('hex')
 
 const createDrawing = async (req, res, next) => {
     const validationErrors = validationResult(req);
@@ -10,18 +17,25 @@ const createDrawing = async (req, res, next) => {
         return next(new HttpError('Invalid Input', 422))
     };
 
-    const { title, description, artist, imgURL, imgJSON } = req.body;
+    const fileBuffer = req.file.buffer;
+    const mimetype = req.file.mimetype;
+    const imageName = generateFileName();
+
+    await uploadFile(fileBuffer, imageName, mimetype)
+
+    const { title, description, artist, imgJSON } = req.body;
 
     const newDrawing = new Drawing({
         title,
         description,
         date: new Date(),
-        imgURL,
+        imgURL: `https://${bucketName}.s3.${bucketRegion}.amazonaws.com/${imageName}`,
         imgJSON,
         artist,
         likeCount: 0,
         comments: []
     });
+
 
     let user;
     try {
@@ -133,7 +147,21 @@ const updateDrawing = async (req, res, next) => {
         return next(new HttpError('Invalid Input', 422))
     };
 
-    const { title, description, imgURL, imgJSON } = req.body;
+    const fileBuffer = req.file.buffer;
+    const mimetype = req.file.mimetype;
+    const imageName = generateFileName();
+
+    try {
+        await uploadFile(fileBuffer, imageName, mimetype)
+    } catch (err) {
+        const error = new HttpError(
+            'Upload image to AWS failed.',
+            500
+        );
+        return next(error);
+    }
+
+    const { title, description, imgJSON } = req.body;
     const drawingId = req.params.id;
 
     let drawing;
@@ -161,11 +189,26 @@ const updateDrawing = async (req, res, next) => {
         return next(error);
     }
 
+    const originalImgUrl = drawing.imgURL
+
     drawing.title = title;
     drawing.description = description;
     drawing.date = new Date();
-    drawing.imgURL = imgURL;
+    drawing.imgURL = `https://${bucketName}.s3.${bucketRegion}.amazonaws.com/${imageName}`;
     drawing.imgJSON = imgJSON;
+
+    const parts = originalImgUrl.split("/")
+    const originalImageName = parts[parts.length - 1]
+
+    try {
+        await deleteFile(originalImageName)
+    } catch (err) {
+        const error = new HttpError(
+            'Deleting original drawing from AWS failed, try again.',
+            500
+        )
+        return next(error)
+    }
 
     try {
         await drawing.save();
@@ -195,7 +238,6 @@ const deleteDrawing = async (req, res, next) => {
         return next(error);
     };
 
-
     if (!drawing) {
         const error = new HttpError(
             'Could not find a drawing for the provided id',
@@ -210,6 +252,19 @@ const deleteDrawing = async (req, res, next) => {
             401
         );
         return next(error);
+    }
+
+    const parts = drawing.imgURL.split("/")
+    const imageName = parts[parts.length - 1]
+
+    try {
+        await deleteFile(imageName)
+    } catch (err) {
+        const error = new HttpError(
+            'Deleting drawing from AWS failed, try again.',
+            500
+        )
+        return next(error)
     }
 
     try {
@@ -269,9 +324,6 @@ const updateLikeCount = async (req, res, next) => {
     res.status(200)
     res.json({ drawing: drawing.toObject({ getters: true }) })
 }
-
-
-
 
 
 exports.createDrawing = createDrawing;

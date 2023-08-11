@@ -23,7 +23,7 @@ router.post('/login', usersControllers.login)
 
 router.post('/logout', usersControllers.logout)
 
-router.patch('/user/update', protect, usersControllers.updateUser)
+router.patch('/user/update', protect, upload.single("image"), usersControllers.updateUser)
 
 router.get('/', usersControllers.getAllUsers)
 

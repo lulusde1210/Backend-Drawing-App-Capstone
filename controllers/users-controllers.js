@@ -180,9 +180,19 @@ const updateUser = async (req, res, next) => {
         return next(new HttpError('Invalid Input', 422))
     };
 
-    const { username, email, password, image } = req.body;
-
+    let image;
     let user;
+
+    if (req.file) {
+        const fileBuffer = req.file.buffer;
+        const mimetype = req.file.mimetype;
+        const imageName = generateFileName();
+        await uploadFile(fileBuffer, imageName, mimetype);
+        image = `https://${bucketName}.s3.${bucketRegion}.amazonaws.com/${imageName}`
+    }
+
+    const { username, email } = req.body;
+
 
     try {
         user = await User.findById(req.user._id);
@@ -197,15 +207,13 @@ const updateUser = async (req, res, next) => {
     if (!user) {
         const error = new HttpError('Could not find user for this id.', 404);
         return next(error);
-    } else {
-        user.username = username || user.name;
-        user.email = email || user.email;
-        user.image = image || user.image;
-
-        if (password) {
-            user.password = password
-        }
     }
+
+
+    user.username = username || user.name;
+    user.email = email || user.email;
+    user.image = image || user.image;
+
 
     try {
         await user.save();

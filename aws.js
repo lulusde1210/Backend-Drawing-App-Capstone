@@ -1,4 +1,4 @@
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { S3Client, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 
 const bucketName = process.env.BUCKET_NAME
 const bucketRegion = process.env.BUCKET_REGION
@@ -25,5 +25,15 @@ const uploadFile = (fileBuffer, fileName, mimetype) => {
     return s3Client.send(new PutObjectCommand(uploadParams));
 }
 
+const deleteFile = (fileName) => {
+    const deleteParams = {
+        Bucket: bucketName,
+        Key: fileName,
+    }
+
+    return s3Client.send(new DeleteObjectCommand(deleteParams));
+}
+
 
 exports.uploadFile = uploadFile
+exports.deleteFile = deleteFile

@@ -15,7 +15,7 @@ const cors = require('cors')
 
 const app = express();
 
-app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.json({ limit: '25mb' }));
 
 app.use(cookieParser());
 
