@@ -1,9 +1,9 @@
 const HttpError = require('../models/http-error');
-const { validationResult } = require('express-validator');
 const Drawing = require('../models/drawing');
 const User = require('../models/user');
 const mongoose = require('mongoose');
 const crypto = require('crypto')
+const { validationResult } = require('express-validator');
 const { uploadFile, deleteFile } = require('../aws')
 
 const bucketName = process.env.BUCKET_NAME
@@ -30,7 +30,6 @@ const createDrawing = async (req, res, next) => {
         return next(error)
     }
 
-
     const { title, description, artist, imgJSON } = req.body;
 
     const newDrawing = new Drawing({
@@ -50,7 +49,7 @@ const createDrawing = async (req, res, next) => {
         user = await User.findById(artist)
     } catch (err) {
         const error = new HttpError(
-            'Creating drawing failed when finding user by id.'
+            'Something went wrong when finding user by Id.'
         );
         return next(error)
     };
@@ -132,8 +131,26 @@ const getDrawingById = async (req, res, next) => {
 
 const getDrawingsByUserId = async (req, res, next) => {
     const userId = req.params.uid;
-    let drawings;
 
+    let user;
+    try {
+        user = await User.findById(userId)
+    } catch (err) {
+        const error = new HttpError(
+            'Something went wrong when finding user by Id.'
+        );
+        return next(error)
+    };
+
+    if (!user) {
+        const error = new HttpError(
+            'Could not find user for provided id',
+            404
+        );
+        return next(error)
+    };
+
+    let drawings;
     try {
         drawings = await Drawing.find({ artist: userId }).populate('artist');
     } catch (err) {
@@ -158,17 +175,6 @@ const updateDrawing = async (req, res, next) => {
     const fileBuffer = req.file.buffer;
     const mimetype = req.file.mimetype;
     const imageName = generateFileName();
-
-    try {
-        await uploadFile(fileBuffer, imageName, mimetype)
-    } catch (err) {
-        const error = new HttpError(
-            'Upload image to AWS failed.',
-            500
-        );
-        return next(error);
-    }
-
     const { title, description, imgJSON } = req.body;
     const drawingId = req.params.id;
 
@@ -189,10 +195,21 @@ const updateDrawing = async (req, res, next) => {
         return next(error);
     }
 
+
     if (drawing.artist._id.toString() !== req.user._id.toString()) {
         const error = new HttpError(
-            'Sorry, you are not allowed to delete this drawing.',
+            'Sorry, you are not allowed to update this drawing.',
             401
+        );
+        return next(error);
+    }
+
+    try {
+        await uploadFile(fileBuffer, imageName, mimetype)
+    } catch (err) {
+        const error = new HttpError(
+            'Upload image to AWS failed.',
+            500
         );
         return next(error);
     }
@@ -209,16 +226,6 @@ const updateDrawing = async (req, res, next) => {
     const originalImageName = parts[parts.length - 1]
 
     try {
-        await deleteFile(originalImageName)
-    } catch (err) {
-        const error = new HttpError(
-            'Deleting original drawing from AWS failed, try again.',
-            500
-        )
-        return next(error)
-    }
-
-    try {
         await drawing.save();
     } catch (err) {
         const error = new HttpError(
@@ -227,6 +234,16 @@ const updateDrawing = async (req, res, next) => {
         )
         return next(error)
     };
+
+    try {
+        await deleteFile(originalImageName)
+    } catch (err) {
+        const error = new HttpError(
+            'Deleting original drawing from AWS failed.',
+            500
+        )
+        return next(error)
+    }
 
     res.status(200);
     res.json({ drawing: drawing.toObject({ getters: true }) })
@@ -266,16 +283,6 @@ const deleteDrawing = async (req, res, next) => {
     const imageName = parts[parts.length - 1]
 
     try {
-        await deleteFile(imageName)
-    } catch (err) {
-        const error = new HttpError(
-            'Deleting drawing from AWS failed, try again.',
-            500
-        )
-        return next(error)
-    }
-
-    try {
         const session = await mongoose.startSession();
         session.startTransaction();
         await drawing.deleteOne({ session: session });
@@ -289,6 +296,16 @@ const deleteDrawing = async (req, res, next) => {
         )
         return next(error)
     };
+
+    try {
+        await deleteFile(imageName)
+    } catch (err) {
+        const error = new HttpError(
+            'Deleting drawing from AWS failed, try again.',
+            500
+        )
+        return next(error)
+    }
 
     res.status(200);
     res.json({ message: 'Successfully deleted the drawing.' })

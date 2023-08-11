@@ -1,10 +1,10 @@
 const HttpError = require('../models/http-error');
-const { validationResult } = require('express-validator')
 const User = require('../models/user');
 const generateToken = require('../util/generateToken.js');
 const mongoose = require('mongoose');
-const { uploadFile } = require('../aws')
 const crypto = require('crypto')
+const { validationResult } = require('express-validator')
+const { uploadFile } = require('../aws')
 
 const bucketName = process.env.BUCKET_NAME
 const bucketRegion = process.env.BUCKET_REGION
@@ -17,18 +17,6 @@ const signup = async (req, res, next) => {
     const mimetype = req.file.mimetype;
 
     const imageName = generateFileName();
-
-    try {
-        await uploadFile(fileBuffer, imageName, mimetype)
-    } catch (err) {
-        const error = new HttpError(
-            'Something went wrong when uploading image to AWS',
-            500
-        )
-        return next(error)
-    }
-
-
     const { username, email, password } = req.body;
 
     let existingUser;
@@ -46,6 +34,16 @@ const signup = async (req, res, next) => {
         const error = new HttpError(
             'Email already exists, please log in.',
             422
+        )
+        return next(error)
+    }
+
+    try {
+        await uploadFile(fileBuffer, imageName, mimetype)
+    } catch (err) {
+        const error = new HttpError(
+            'Something went wrong when uploading image to AWS',
+            500
         )
         return next(error)
     }
