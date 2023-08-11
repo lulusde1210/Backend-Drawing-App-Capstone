@@ -18,7 +18,16 @@ const signup = async (req, res, next) => {
 
     const imageName = generateFileName();
 
-    await uploadFile(fileBuffer, imageName, mimetype)
+    try {
+        await uploadFile(fileBuffer, imageName, mimetype)
+    } catch (err) {
+        const error = new HttpError(
+            'Something went wrong when uploading image to AWS',
+            500
+        )
+        return next(error)
+    }
+
 
     const { username, email, password } = req.body;
 
@@ -187,8 +196,16 @@ const updateUser = async (req, res, next) => {
         const fileBuffer = req.file.buffer;
         const mimetype = req.file.mimetype;
         const imageName = generateFileName();
-        await uploadFile(fileBuffer, imageName, mimetype);
-        image = `https://${bucketName}.s3.${bucketRegion}.amazonaws.com/${imageName}`
+        try {
+            await uploadFile(fileBuffer, imageName, mimetype);
+            image = `https://${bucketName}.s3.${bucketRegion}.amazonaws.com/${imageName}`
+        } catch (err) {
+            const error = new HttpError(
+                'Something went wrong with uploading image to AWS',
+                500
+            )
+            return next(error)
+        }
     }
 
     const { username, email } = req.body;

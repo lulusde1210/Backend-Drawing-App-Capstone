@@ -21,7 +21,15 @@ const createDrawing = async (req, res, next) => {
     const mimetype = req.file.mimetype;
     const imageName = generateFileName();
 
-    await uploadFile(fileBuffer, imageName, mimetype)
+    try {
+        await uploadFile(fileBuffer, imageName, mimetype)
+    } catch (err) {
+        const error = new HttpError(
+            'Something went wrong when uploading image to AWS.'
+        );
+        return next(error)
+    }
+
 
     const { title, description, artist, imgJSON } = req.body;
 
