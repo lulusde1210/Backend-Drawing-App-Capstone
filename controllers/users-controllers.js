@@ -3,14 +3,24 @@ const { validationResult } = require('express-validator')
 const User = require('../models/user');
 const generateToken = require('../util/generateToken.js');
 const mongoose = require('mongoose');
+const { uploadFile } = require('../aws')
+const crypto = require('crypto')
+
+const bucketName = process.env.BUCKET_NAME
+const bucketRegion = process.env.BUCKET_REGION
+
+const generateFileName = (bytes = 32) => crypto.randomBytes(bytes).toString('hex')
+
 
 const signup = async (req, res, next) => {
-    const validationErrors = validationResult(req);
-    if (!validationErrors.isEmpty()) {
-        return next(new HttpError('Invalid Input', 422))
-    };
+    const fileBuffer = req.file.buffer;
+    const mimetype = req.file.mimetype;
 
-    const { username, email, password, image } = req.body;
+    const imageName = generateFileName();
+
+    await uploadFile(fileBuffer, imageName, mimetype)
+
+    const { username, email, password } = req.body;
 
     let existingUser;
     try {
@@ -35,7 +45,7 @@ const signup = async (req, res, next) => {
         username,
         email,
         password,
-        image,
+        image: `https://${bucketName}.s3.${bucketRegion}.amazonaws.com/${imageName}`,
         drawings: [],
         following: [],
         followers: []

@@ -4,6 +4,10 @@ const usersControllers = require('../controllers/users-controllers');
 const { check } = require('express-validator');
 const { protect } = require('../middleware/authMiddleware');
 
+const multer = require('multer');
+const upload = multer({
+    storage: multer.memoryStorage()
+})
 
 //  api/users
 const userSignupInputValidation =
@@ -13,7 +17,7 @@ const userSignupInputValidation =
         check('password').not().isEmpty()
     ];
 
-router.post('/signup', userSignupInputValidation, usersControllers.signup)
+router.post('/signup', upload.single("image"), userSignupInputValidation, usersControllers.signup)
 
 router.post('/login', usersControllers.login)
 

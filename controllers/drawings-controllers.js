@@ -4,7 +4,6 @@ const Drawing = require('../models/drawing');
 const User = require('../models/user');
 const mongoose = require('mongoose');
 
-
 const createDrawing = async (req, res, next) => {
     const validationErrors = validationResult(req);
     if (!validationErrors.isEmpty()) {
